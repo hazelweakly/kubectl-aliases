@@ -38,6 +38,7 @@ def main():
         ("ak", "apply -k", None, ["sys"]),
         ("k", "kustomize", None, ["sys"]),
         ("ex", "exec -i -t", None, None),
+        ("ed", "edit", None, None),
         ("L", "logs -f", None, None),
         ("LP", "logs -f -p", None, None),
         # ('p', 'proxy', None, ['sys']),
@@ -54,15 +55,15 @@ def main():
     ]
 
     res = [
-        ("P", "pods", ["g", "d", "rm"], None),
-        ("D", "deployment", ["g", "d", "rm"], None),
-        ("sts", "statefulset", ["g", "d", "rm"], None),
-        ("svc", "service", ["g", "d", "rm"], None),
-        ("ing", "ingress", ["g", "d", "rm"], None),
-        ("cm", "configmap", ["g", "d", "rm"], None),
-        ("sec", "secret", ["g", "d", "rm"], None),
+        ("P", "pods", ["g", "d", "ed", "rm"], None),
+        ("D", "deployment", ["g", "d", "ed", "rm"], None),
+        ("sts", "statefulset", ["g", "d", "ed", "rm"], None),
+        ("svc", "service", ["g", "d", "ed", "rm"], None),
+        ("ing", "ingress", ["g", "d", "ed", "rm"], None),
+        ("cm", "configmap", ["g", "d", "ed", "rm"], None),
+        ("sec", "secret", ["g", "d", "ed", "rm"], None),
         ("no", "nodes", ["g", "d"], ["sys"]),
-        ("ns", "namespaces", ["g", "d", "rm"], ["sys"]),
+        ("ns", "namespaces", ["g", "d", "ed", "rm"], ["sys"]),
     ]
     res_types = [r[0] for r in res]
 
@@ -79,12 +80,17 @@ def main():
     # these accept a value, so they need to be at the end and
     # mutually exclusive within each other.
     positional_args = [
-        ("f", "--recursive -f", ["g", "d", "rm"], res_types + ["all", "l", "sys"]),
-        ("l", "-l", ["g", "d", "rm"], ["f", "all"]),
+        (
+            "f",
+            "--recursive -f",
+            ["g", "d", "ed", "rm"],
+            res_types + ["all", "l", "sys"],
+        ),
+        # ("l", "-l", ["g", "d", "ed", "rm"], ["f", "all"]),
         (
             "n",
             "--namespace",
-            ["g", "d", "rm", "L", "ex", "pf"],
+            ["g", "d", "ed", "rm", "L", "ex", "pf"],
             ["ns", "no", "sys", "all"],
         ),
     ]
