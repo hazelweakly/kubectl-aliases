@@ -16,6 +16,7 @@
 # limitations under the License.
 
 from __future__ import print_function
+
 import itertools
 import os.path
 import sys
@@ -28,54 +29,65 @@ except NameError:
 
 def main():
     # (alias, full, allow_when_oneof, incompatible_with)
-    cmds = [('k', 'kubectl', None, None)]
+    cmds = [("k", "kubectl", None, None)]
 
-    globs = [('sys', '--namespace=kube-system', None, None)]
+    globs = [("sys", "--namespace=kube-system", None, None)]
 
     ops = [
-        ('a', 'apply --recursive -f', None, None),
-        ('ak', 'apply -k', None, ['sys']),
-        ('k', 'kustomize', None, ['sys']),
-        ('ex', 'exec -i -t', None, None),
-        ('lo', 'logs -f', None, None),
-        ('lop', 'logs -f -p', None, None),
-        ('p', 'proxy', None, ['sys']),
-        ('pf', 'port-forward', None, ['sys']),
-        ('g', 'get', None, None),
-        ('d', 'describe', None, None),
-        ('rm', 'delete', None, None),
-        ('run', 'run --rm --restart=Never --image-pull-policy=IfNotPresent -i -t', None, None),
-        ]
+        ("a", "apply --recursive -f", None, None),
+        ("ak", "apply -k", None, ["sys"]),
+        ("k", "kustomize", None, ["sys"]),
+        ("ex", "exec -i -t", None, None),
+        ("L", "logs -f", None, None),
+        ("LP", "logs -f -p", None, None),
+        # ('p', 'proxy', None, ['sys']),
+        # ('pf', 'port-forward', None, ['sys']),
+        ("g", "get", None, None),
+        ("d", "describe", None, None),
+        ("rm", "delete", None, None),
+        (
+            "run",
+            "run --rm --restart=Never --image-pull-policy=IfNotPresent -i -t",
+            None,
+            None,
+        ),
+    ]
 
     res = [
-        ('po', 'pods', ['g', 'd', 'rm'], None),
-        ('dep', 'deployment', ['g', 'd', 'rm'], None),
-        ('sts', 'statefulset', ['g', 'd', 'rm'], None),
-        ('svc', 'service', ['g', 'd', 'rm'], None),
-        ('ing', 'ingress', ['g', 'd', 'rm'], None),
-        ('cm', 'configmap', ['g', 'd', 'rm'], None),
-        ('sec', 'secret', ['g', 'd', 'rm'], None),
-        ('no', 'nodes', ['g', 'd'], ['sys']),
-        ('ns', 'namespaces', ['g', 'd', 'rm'], ['sys']),
-        ]
+        ("P", "pods", ["g", "d", "rm"], None),
+        ("D", "deployment", ["g", "d", "rm"], None),
+        ("sts", "statefulset", ["g", "d", "rm"], None),
+        ("svc", "service", ["g", "d", "rm"], None),
+        ("ing", "ingress", ["g", "d", "rm"], None),
+        ("cm", "configmap", ["g", "d", "rm"], None),
+        ("sec", "secret", ["g", "d", "rm"], None),
+        ("no", "nodes", ["g", "d"], ["sys"]),
+        ("ns", "namespaces", ["g", "d", "rm"], ["sys"]),
+    ]
     res_types = [r[0] for r in res]
 
     args = [
-        ('oyaml', '-o=yaml', ['g'], ['owide', 'ojson', 'sl']),
-        ('owide', '-o=wide', ['g'], ['oyaml', 'ojson']),
-        ('ojson', '-o=json', ['g'], ['owide', 'oyaml', 'sl']),
-        ('all', '--all-namespaces', ['g', 'd'], ['rm', 'f', 'no', 'sys']),
-        ('sl', '--show-labels', ['g'], ['oyaml', 'ojson'], None),
-        ('all', '--all', ['rm'], None), # caution: reusing the alias
-        ('w', '--watch', ['g'], ['oyaml', 'ojson', 'owide']),
-        ]
+        ("oyaml", "-o=yaml", ["g"], ["owide", "ojson", "sl"]),
+        ("owide", "-o=wide", ["g"], ["oyaml", "ojson"]),
+        # ('ojson', '-o=json', ['g'], ['owide', 'oyaml', 'sl']),
+        ("all", "--all-namespaces", ["g", "d"], ["rm", "f", "no", "sys"]),
+        # ('sl', '--show-labels', ['g'], ['oyaml', 'ojson'], None),
+        ("all", "--all", ["rm"], None),  # caution: reusing the alias
+        # ('w', '--watch', ['g'], ['oyaml', 'ojson', 'owide']),
+    ]
 
     # these accept a value, so they need to be at the end and
     # mutually exclusive within each other.
-    positional_args = [('f', '--recursive -f', ['g', 'd', 'rm'], res_types + ['all'
-                       , 'l', 'sys']), ('l', '-l', ['g', 'd', 'rm'], ['f',
-                       'all']), ('n', '--namespace', ['g', 'd', 'rm',
-                       'lo', 'ex', 'pf'], ['ns', 'no', 'sys', 'all'])]
+    positional_args = [
+        ("f", "--recursive -f", ["g", "d", "rm"], res_types + ["all", "l", "sys"]),
+        ("l", "-l", ["g", "d", "rm"], ["f", "all"]),
+        (
+            "n",
+            "--namespace",
+            ["g", "d", "rm", "L", "ex", "pf"],
+            ["ns", "no", "sys", "all"],
+        ),
+    ]
 
     # [(part, optional, take_exactly_one)]
     parts = [
@@ -85,34 +97,43 @@ def main():
         (res, True, True),
         (args, True, False),
         (positional_args, True, True),
-        ]
+    ]
 
     shellFormatting = {
         "bash": "alias {}='{}'",
         "zsh": "alias {}='{}'",
-        "fish": "abbr --add {} \"{}\"",
+        "fish": 'abbr --add {} "{}"',
     }
 
     shell = sys.argv[1] if len(sys.argv) > 1 else "bash"
     if shell not in shellFormatting:
-        raise ValueError("Shell \"{}\" not supported. Options are {}"
-                        .format(shell, [key for key in shellFormatting]))
+        raise ValueError(
+            'Shell "{}" not supported. Options are {}'.format(
+                shell, [key for key in shellFormatting]
+            )
+        )
 
     out = gen(parts)
 
     # prepare output
     if not sys.stdout.isatty():
-        header_path = \
-            os.path.join(os.path.dirname(os.path.realpath(__file__)),
-                         'license_header')
-        with open(header_path, 'r') as f:
+        header_path = os.path.join(
+            os.path.dirname(os.path.realpath(__file__)), "license_header"
+        )
+        with open(header_path, "r") as f:
             print(f.read())
 
     seen_aliases = set()
 
     for cmd in out:
-        alias = ''.join([a[0] for a in cmd])
-        command = ' '.join([a[1] for a in cmd])
+        alias = (
+            "".join([a[0] for a in cmd])
+            .replace("D", "d")
+            .replace("P", "p")
+            .replace("L", "l")
+            .replace("LP", "lp")
+        )
+        command = " ".join([a[1] for a in cmd])
 
         if alias in seen_aliases:
             print("Alias conflict detected: {}".format(alias), file=sys.stderr)
@@ -124,7 +145,7 @@ def main():
 
 def gen(parts):
     out = [()]
-    for (items, optional, take_exactly_one) in parts:
+    for items, optional, take_exactly_one in parts:
         orig = list(out)
         combos = []
 
@@ -200,5 +221,5 @@ def diff(a, b):
     return list(set(a) - set(b))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
