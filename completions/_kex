@@ -1,0 +1,6 @@
+#compdef kex
+
+CURRENT=$((3 + CURRENT))
+words=("${words[@]:1}")
+words=(kubectl exec -i -t "${words[@]}")
+$_comps[kubectl]

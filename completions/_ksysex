@@ -1,0 +1,6 @@
+#compdef ksysex
+
+CURRENT=$((5 + CURRENT))
+words=("${words[@]:1}")
+words=(kubectl --namespace kube-system exec -i -t "${words[@]}")
+$_comps[kubectl]

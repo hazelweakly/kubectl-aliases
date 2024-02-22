@@ -31,10 +31,10 @@ def main():
     # (alias, full, allow_when_oneof, incompatible_with)
     cmds = [("k", "kubectl", None, None)]
 
-    globs = [("sys", "--namespace=kube-system", None, None)]
+    globs = [("sys", "--namespace kube-system", None, None)]
 
     ops = [
-        ("a", "apply --recursive -f", None, None),
+        ("a", "apply --recursive -f", None, ["sys"]),
         ("ak", "apply -k", None, ["sys"]),
         ("k", "kustomize", None, ["sys"]),
         ("ex", "exec -i -t", None, None),
@@ -48,7 +48,7 @@ def main():
         ("rm", "delete", None, None),
         (
             "run",
-            "run --rm --restart=Never --image-pull-policy=IfNotPresent -i -t",
+            "run --rm --restart Never --image-pull-policy IfNotPresent -i -t",
             None,
             None,
         ),
@@ -56,6 +56,8 @@ def main():
 
     res = [
         ("P", "pods", ["g", "d", "ed", "rm"], None),
+        ("j", "jobs", ["g", "d", "ed", "rm"], None),
+        ("cj", "cronjobs", ["g", "d", "ed", "rm"], None),
         ("D", "deployment", ["g", "d", "ed", "rm"], None),
         ("sts", "statefulset", ["g", "d", "ed", "rm"], None),
         ("svc", "service", ["g", "d", "ed", "rm"], None),
@@ -68,9 +70,9 @@ def main():
     res_types = [r[0] for r in res]
 
     args = [
-        ("oyaml", "-o=yaml", ["g"], ["owide", "ojson", "sl"]),
-        ("owide", "-o=wide", ["g"], ["oyaml", "ojson"]),
-        # ('ojson', '-o=json', ['g'], ['owide', 'oyaml', 'sl']),
+        ("oyaml", "-o yaml", ["g"], ["owide", "ojson", "sl"]),
+        ("owide", "-o wide", ["g"], ["oyaml", "ojson"]),
+        # ('ojson', '-o json', ['g'], ['owide', 'oyaml', 'sl']),
         ("all", "--all-namespaces", ["g", "d"], ["rm", "f", "no", "sys"]),
         # ('sl', '--show-labels', ['g'], ['oyaml', 'ojson'], None),
         ("all", "--all", ["rm"], None),  # caution: reusing the alias
@@ -110,6 +112,24 @@ def main():
         "zsh": "alias {}='{}'",
         "fish": 'abbr --add {} "{}"',
     }
+    shellFunction = {
+        "zsh": """
+function {0}() {{
+  local fek() {{ echo "usage: {0} requires at least two arguments" >&2; {1} --help ; }}
+  [[ -z $# ]] || [[ $# > 1 ]] || {{ fek && return 1; }}
+  {1} "${{@:1:$# -1}}" -- "${{@: -1}}"
+}}
+"""
+    }
+    shellCompletion = {
+        "zsh": """#compdef {0}
+
+CURRENT=$(({2} + CURRENT))
+words=("${{words[@]:1}}")
+words=({1} "${{words[@]}}")
+$_comps[kubectl]
+"""
+    }
 
     shell = sys.argv[1] if len(sys.argv) > 1 else "bash"
     if shell not in shellFormatting:
@@ -129,6 +149,15 @@ def main():
         with open(header_path, "r") as f:
             print(f.read())
 
+    print(
+        """
+0="${ZERO:-${${0:#$ZSH_ARGZERO}:-${(%):-%N}}}"
+0="${${(M)0:#/*}:-$PWD/$0}"
+fpath+="${0:A:h}/completions"
+
+"""
+    )
+
     seen_aliases = set()
 
     for cmd in out:
@@ -146,7 +175,20 @@ def main():
 
         seen_aliases.add(alias)
 
-        print(shellFormatting[shell].format(alias, command))
+        if "ex" in alias:
+            print(shellFunction[shell].format(alias, command))
+            completions_dir = os.path.join(
+                os.path.dirname(os.path.realpath(__file__)), "completions"
+            )
+
+            with open(os.path.join(completions_dir, "_{}".format(alias)), "w") as f:
+                f.write(
+                    shellCompletion[shell].format(
+                        alias, command, len(command.split(" ")) - 1
+                    )
+                )
+        else:
+            print(shellFormatting[shell].format(alias, command))
 
 
 def gen(parts):
