@@ -66,16 +66,18 @@ def main():
         ("sec", "secret", ["g", "d", "ed", "rm"], None),
         ("no", "nodes", ["g", "d"], ["sys"]),
         ("ns", "namespaces", ["g", "d", "ed", "rm"], ["sys"]),
+        ("e", "events", ["g"], None),
     ]
     res_types = [r[0] for r in res]
 
     args = [
-        ("oyaml", "-o yaml", ["g"], ["owide", "ojson", "sl"]),
-        ("owide", "-o wide", ["g"], ["oyaml", "ojson"]),
+        # ("oyaml", "-o yaml", ["g"], ["owide", "ojson", "sl"]),
+        # ("owide", "-o wide", ["g"], ["oyaml", "ojson"]),
+        ("st", "--sort-by='.lastTimestamp'", ["g"], None),
         # ('ojson', '-o json', ['g'], ['owide', 'oyaml', 'sl']),
-        ("all", "--all-namespaces", ["g", "d"], ["rm", "f", "no", "sys"]),
+        # ("all", "--all-namespaces", ["g", "d"], ["rm", "f", "no", "sys"]),
         # ('sl', '--show-labels', ['g'], ['oyaml', 'ojson'], None),
-        ("all", "--all", ["rm"], None),  # caution: reusing the alias
+        # ("all", "--all", ["rm"], None),  # caution: reusing the alias
         # ('w', '--watch', ['g'], ['oyaml', 'ojson', 'owide']),
     ]
 
